@@ -55,4 +55,9 @@ module.exports = app;
 
 
 //npm run devstart
+
+// git add -A
+// git commit -m "First version of application moved into github"
+// git push origin master
+
 //https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/mongoose#Connect_to_MongoDB
