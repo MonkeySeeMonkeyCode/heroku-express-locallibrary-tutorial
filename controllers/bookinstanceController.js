@@ -182,7 +182,6 @@ exports.bookinstance_update_post = [
               status: req.body.status,
               _id: req.params.id //This is required, or a new ID will be assigned
             });
-            console.log(bookinstance);
         if (!errors.isEmpty()) {
             // There are errors. Render form again with sanitized values/error messages.
 
@@ -214,6 +213,7 @@ exports.bookinstance_update_post = [
             BookInstance.findByIdAndUpdate(req.params.id, bookinstance, {}, function (err,thebookinstance) {
                 if (err) { return next(err); }
                 // Successful - redirect to bookinstance page.
+                console.log(thebookinstance.url)
                 res.redirect(thebookinstance.url);
             });
         }
