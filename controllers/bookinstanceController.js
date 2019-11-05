@@ -213,7 +213,6 @@ exports.bookinstance_update_post = [
             BookInstance.findByIdAndUpdate(req.params.id, bookinstance, {}, function (err,thebookinstance) {
                 if (err) { return next(err); }
                 // Successful - redirect to bookinstance page.
-                console.log(thebookinstance.url)
                 res.redirect(thebookinstance.url);
             });
         }

@@ -2,6 +2,8 @@ var Genre = require('../models/genre');
 var Book = require('../models/book');
 var async = require('async');
 const validator = require('express-validator');
+const { body,validationResult } = require('express-validator');
+const { sanitizeBody } = require('express-validator');
 
 // Display list of all Genre.
 exports.genre_list = function(req, res) {
@@ -101,20 +103,94 @@ exports.genre_create_post =  [
 
 // Display Genre delete form on GET.
 exports.genre_delete_get = function(req, res) {
-    res.send('NOT IMPLEMENTED: Genre delete GET');
+    
+    async.parallel({
+        genre: function(callback) {
+          Genre.findById(req.params.id).exec(callback)
+      },
+      book: function (callback) {
+        Book.find({ 'genre': req.params.id }).exec(callback)
+      }
+    }, function(err,results) {
+      if (err) { return next(err); }
+      if (results.genre==null) // No results.
+        res.redirect('/catalog/genres');
+        // Successful, so render.
+        res.render('genre_delete', { title: 'Delete Genre', genre: results.genre, books: results.book } );
+    });
 };
 
 // Handle Genre delete on POST.
 exports.genre_delete_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: Genre delete POST');
+
+  async.parallel({
+    genre: function(callback) {
+        Genre.findById(req.params.id).exec(callback)
+    },
+    book: function (callback) {
+        Book.find({ 'genre': req.params.id }).exec(callback)
+    }
+  }, function(err, results) {
+        if (err) {return next(err); }
+        if (results.book > 0) {
+            // genre has books. render same was as get route
+            res.rend('genre_delete', { title: 'Delete Genre', genre: results.genre, book: results.book } );
+            return;
+        }
+        else {
+            // genre has no books. delete object and redirect to the list of genres.
+            Genre.findByIdAndDelete(req.body.genreid, function deleteGenre(err) {
+                if (err) {return next(err); }
+                //success - go to genre list
+                res.redirect('/catalog/genres')
+            });
+        }
+  })
 };
 
 // Display Genre update form on GET.
 exports.genre_update_get = function(req, res) {
-    res.send('NOT IMPLEMENTED: Genre update GET');
+    
+    // get current genre for form.
+    Genre.findById(req.params.id)
+    .exec( function (err, genre) {
+        if (err) {return next(err); }
+        // successful so render
+        res.render('genre_form', {title : 'Update Genre', genre: genre });
+    })
 };
 
 // Handle Genre update on POST.
-exports.genre_update_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: Genre update POST');
-};
+exports.genre_update_post = [
+
+    //validate field
+    body('name', 'Name must not be empty.').isLength({ min: 1}).trim(),
+
+    // sanitize fields
+    sanitizeBody('name').escape(),
+
+    //process request after validation and sanitization
+    (req, res, next) => {
+        //extract the validation errors from a request.
+        const errors = validationResult(req);
+
+        // create a genre with escaped/trimmed data and old id.
+        var genre = new Genre(
+            { name: req.body.name,
+            _id: req.params.id // this is required or a new id will be assigned
+        })
+        if (!errors.isEmpty()) {
+            // there are errors. render form again with sanitized values/error message
+            res.render('genre_form', {title: 'Update Genre', genre: genre });
+        }
+        else {
+            Genre.findByIdAndUpdate(req.params.id, genre, {}, function (err,thegenre) {
+                if (err) {
+                    return next(err);
+                }
+                // successful - redirect to genre page.
+                res.redirect(thegenre.url);
+            });
+        }
+    }
+];

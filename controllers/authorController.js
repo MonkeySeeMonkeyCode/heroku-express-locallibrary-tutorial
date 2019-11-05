@@ -152,7 +152,6 @@ exports.author_update_get = function(req, res, next) {
     .exec( function (err, author) {
         if (err) {return next(err); }
         //Successful, so render
-        console.log(author)
         res.render('author_form', { title: 'Update Author', author: author });
     })
 };
@@ -192,7 +191,6 @@ exports.author_update_post = [
                     return next(err);
                 }
                 // Successful - redirect to author page.
-                console.log(theauthor.url);
                 res.redirect(theauthor.url);
             });
         }
